@@ -17,7 +17,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     }
 
     @Override
-    public ProductionOrder updateStatus(String orderId, Long status) {
+    public ProductionOrder updateStatus(String orderId, Integer status) {
         var order = productionOrderRepository.findByOrderNumber(orderId);
         if(order == null) {
             log.error("Order not found"); //TODO - Colocar um throw exception

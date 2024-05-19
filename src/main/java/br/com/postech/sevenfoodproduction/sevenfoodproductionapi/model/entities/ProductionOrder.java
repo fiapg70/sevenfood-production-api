@@ -26,7 +26,7 @@ public class ProductionOrder {
     @Field("order_date")
     private String orderDate;
     @Field("order_status")
-    private Long orderStatus;
+    private Integer orderStatus;
     @Field("order")
     private String order;
     @Field("total_price")

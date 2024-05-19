@@ -18,7 +18,7 @@ public class ProductionOrderResources {
     }
 
     @PutMapping("/{orderId}/status/{status}")
-    public ResponseEntity<?> update(@PathVariable final String orderId, @PathVariable final Long status) {
+    public ResponseEntity<?> update(@PathVariable final String orderId, @PathVariable final Integer status) {
         var orderSaved = productionOrderService.updateStatus(orderId, status);
         if(orderSaved == null) {
             return ResponseEntity.notFound().build();

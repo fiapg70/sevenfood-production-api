@@ -1,6 +1,7 @@
 package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.event;
 
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.OrderDto;
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.OrderStatusDTO;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.StatusPedido;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.entities.ProductionOrder;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.repositories.ProductionOrderRepository;
@@ -28,6 +29,9 @@ public class OrderPreparationService {
     @Value("${app.queue-sqs.name}")
     private String queueName;
 
+    @Value("${app.queue-status-sqs.name}")
+    private String queueStatusName;
+
     private final SqsTemplate sqsTemplate;
     private final ProductionOrderRepository productionOrderRepository;
 
@@ -37,9 +41,10 @@ public class OrderPreparationService {
         this.productionOrderRepository = productionOrderRepository;
     }
 
-    @SqsListener(value = "${app.queue-status-sqs.name}")
+    @SqsListener(value = "${app.queue-sqs.name}")
     public void listen(String payload, @Headers Map<String, Object> header, Acknowledgement acknowledgement) {
         try {
+            log.info("OrderPreparationService.listen {}", payload);
             ObjectMapper objectMapper = JsonMapperUtil.getObjectMapper();
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -48,13 +53,20 @@ public class OrderPreparationService {
                     .id(UUID.randomUUID().toString())
                     .orderNumber(orderStatusDTO.getCode())
                     .clientId(orderStatusDTO.getClientId())
-                    .orderStatus(StatusPedido.EM_PROCESSAMENTO.getCod())
+                    .orderStatus(StatusPedido.EM_PREPARACAO.getCode())
                     .totalPrice(orderStatusDTO.getTotalPrice())
                     .products(orderStatusDTO.getProducts().toString()) //TODO -vericicar como fazer com a lista de produtos
                     .build();
 
-            productionOrderRepository.save(order);
-            log.info("OrderPreparationService.listen {}", payload);
+            ProductionOrder save = productionOrderRepository.save(order);
+            OrderStatusDTO orderStatus = OrderStatusDTO.builder()
+                    .orderId(save.getOrderNumber())
+                    .statusPedido(save.getOrderStatus())
+                    .build();
+
+            String orderStatusMessage = objectMapper.writeValueAsString(orderStatus);
+            log.info("OrderPreparationService.listen {}", orderStatusMessage);
+            sendMessage(orderStatusMessage);
             // Acknowledge the message after successful processing
             acknowledgement.acknowledge();
         } catch (JsonProcessingException e) {
@@ -66,7 +78,7 @@ public class OrderPreparationService {
         sqsTemplate
                 .send(sqsSendOptions ->
                         sqsSendOptions
-                                .queue(queueName)
+                                .queue(queueStatusName)
                                 .payload(message)
                 );
     }
