@@ -1,14 +1,11 @@
 package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.api.v1.reources;
 
-import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.StatusPedido;
-import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.entities.ProductionOrder;
-import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.repositories.ProductionOrderRepository;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.ProductionOrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/status-production")
+@RequestMapping("/v1/status-production")
 public class ProductionOrderResources {
 
     public final ProductionOrderService productionOrderService;

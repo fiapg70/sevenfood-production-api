@@ -15,10 +15,10 @@ import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,8 +42,9 @@ public class OrderPreparationService {
     }
 
     @SqsListener(value = "${app.queue-sqs.name}")
-    public void listen(String payload, @Headers Map<String, Object> header, Acknowledgement acknowledgement) {
+    public void listen(Message<?> message, @Headers Map<String, Object> header) {
         try {
+            String payload = String.valueOf(message.getPayload());
             log.info("OrderPreparationService.listen {}", payload);
             ObjectMapper objectMapper = JsonMapperUtil.getObjectMapper();
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -67,8 +68,7 @@ public class OrderPreparationService {
             String orderStatusMessage = objectMapper.writeValueAsString(orderStatus);
             log.info("OrderPreparationService.listen {}", orderStatusMessage);
             sendMessage(orderStatusMessage);
-            // Acknowledge the message after successful processing
-            acknowledgement.acknowledge();
+            Acknowledgement.acknowledge(message);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
