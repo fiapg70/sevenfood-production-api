@@ -11,7 +11,7 @@ spring:
     allow-circular-references: true
   data:
     mongodb:
-      uri: mongodb://root:admin123@192.168.100.33:27017/?authSource=admin
+      uri: mongodb://root:admin123@18.215.234.170:27017/?authSource=admin
       database: production_order
   mvc:
     pathmatch:
