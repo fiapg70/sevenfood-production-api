@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sevenfood-production-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sevenfood-production-api
+  template:
+    metadata:
+      labels:
+        app: sevenfood-production-api
+    spec:
+      containers:
+        - name: sevenfood-production-api-container
+          image: marrani/sevenfood-production-api:latest
+          ports:
+            - containerPort: 9991
+        
