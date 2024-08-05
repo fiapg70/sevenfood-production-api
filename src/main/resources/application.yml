@@ -26,28 +26,28 @@ spring:
     sqs:
       enabled: true
       endpoint: ${AWS_ENDPOINT_URL}
-  security:
-    oauth2:
-      client:
-        provider:
-          cognito:
-            issuer-uri: ${AWS_COGNITO_ISSUER_URI} #TODO - retirar
-        registration:
-          cognito:
-            client-id: ${AWS_COGNITO_CLIENT_ID} #TODO - retirar
-            client-secret: ${AWS_COGNITO_CLIENT_SECRET} #TODO - retirar
-            scope: openid
+  #security:
+  #  oauth2:
+  #    client:
+  #      provider:
+  #        cognito:
+  #          issuer-uri: ${AWS_COGNITO_ISSUER_URI} #TODO - retirar
+  #      registration:
+  ##        cognito:
+  #          client-id: ${AWS_COGNITO_CLIENT_ID} #TODO - retirar
+  #          client-secret: ${AWS_COGNITO_CLIENT_SECRET} #TODO - retirar
+  #          scope: openid
 
-application:
-  security:
-    jwt:
-      secret-key: ${JWT_SECRET_KEY}
-      expiration: 864000000 # 10 day
-      refresh-token:
-        expiration: 6048000000 # 70 days
+#application:
+#  security:
+#    jwt:
+#      secret-key: ${JWT_SECRET_KEY}
+#      expiration: 864000000 # 10 day
+#      refresh-token:
+#        expiration: 6048000000 # 70 days
 
-cognito:
-  user-pool-id: ${AWS_COGNITO_USER_POOL_ID} #TODO - retirar
+#cognito:
+#  user-pool-id: ${AWS_COGNITO_USER_POOL_ID} #TODO - retirar
 
 app:
   queue-sqs:
