@@ -1,5 +1,6 @@
 package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.api.v1.reources;
 
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.api.v1.dto.OrderStatus;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.ProductionOrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,9 @@ public class ProductionOrderResources {
         this.productionOrderService = productionOrderService;
     }
 
-    @PutMapping("/{orderId}/status/{status}")
-    public ResponseEntity<?> update(@PathVariable final String orderId, @PathVariable final Integer status) {
-        var orderSaved = productionOrderService.updateStatus(orderId, status);
+    @PutMapping("/{orderId}")
+    public ResponseEntity<?> update(@PathVariable final String orderId, @RequestBody OrderStatus orderstatus) {
+        var orderSaved = productionOrderService.updateStatus(orderId, orderstatus.status());
         if(orderSaved == null) {
             return ResponseEntity.notFound().build();
         }

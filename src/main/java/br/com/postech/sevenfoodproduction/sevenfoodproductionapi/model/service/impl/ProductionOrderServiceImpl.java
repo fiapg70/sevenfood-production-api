@@ -1,8 +1,14 @@
 package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.impl;
 
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.OrderStatusDTO;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.entities.ProductionOrder;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.repositories.ProductionOrderRepository;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.ProductionOrderService;
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.event.send.SendOrderStatusMessage;
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.util.JsonMapperUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -10,22 +16,33 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductionOrderServiceImpl implements ProductionOrderService {
 
-    public final ProductionOrderRepository productionOrderRepository;
+    private final SendOrderStatusMessage sendOrderStatusMessage;
+    private final ProductionOrderRepository productionOrderRepository;
 
-    public ProductionOrderServiceImpl(ProductionOrderRepository productionOrderRepository) {
+    public ProductionOrderServiceImpl(ProductionOrderRepository productionOrderRepository, SendOrderStatusMessage sendOrderStatusMessage) {
         this.productionOrderRepository = productionOrderRepository;
+        this.sendOrderStatusMessage = sendOrderStatusMessage;
     }
 
     @Override
     public ProductionOrder updateStatus(String orderId, Integer status) {
-        var order = productionOrderRepository.findByOrderNumber(orderId);
-        if(order == null) {
-            log.error("Order not found"); //TODO - Colocar um throw exception
-            return null;
+        try {
+            var order = productionOrderRepository.findByOrderNumber(orderId);
+            if (order == null) {
+                throw new RuntimeException("Order not found");
+            }
+
+            order.setOrderStatus(status);
+            ProductionOrder saved = productionOrderRepository.save(order);
+            if (saved != null) {
+                log.info("Order {} updated to status {}", orderId, status);
+                sendOrderStatusMessage.sendOrderStatusMessage(orderId, status);
+                return saved;
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-        order.setOrderStatus(status);
-        ProductionOrder saved = productionOrderRepository.save(order);
-        return saved;
+        return null;
     }
 
     @Override
@@ -42,4 +59,5 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     public Object findAll() {
         return productionOrderRepository.findAll();
     }
+
 }
