@@ -4,6 +4,7 @@ import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.Order
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.util.JsonMapperUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,12 @@ public class SendOrderStatusOrderStatusMessageImpl implements SendOrderStatusMes
     private String queueStatusName;
 
     private final SqsTemplate sqsTemplate;
+
+    @PostConstruct
+    public void init() {
+        log.info("Queue Name: {}", queueName);
+        log.info("Queue Status Name: {}", queueStatusName);
+    }
 
     public SendOrderStatusOrderStatusMessageImpl(SqsTemplate sqsTemplate) {
         this.sqsTemplate = sqsTemplate;
