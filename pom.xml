@@ -19,6 +19,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
+        <sonar.organization>fiapg70</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
     <dependencies>
         <dependency>
