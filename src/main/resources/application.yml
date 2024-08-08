@@ -11,8 +11,8 @@ spring:
     allow-circular-references: true
   data:
     mongodb:
-      uri: mongodb://root:admin123@18.215.234.170:27017/?authSource=admin
-      database: production_order
+      uri: mongodb://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_URL}:${DATABASE_PORT}/?authSource=admin
+      database: ${DATABASE_NAME}
   mvc:
     pathmatch:
       matching-strategy: "path-pattern-parser"

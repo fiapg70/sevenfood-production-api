@@ -1,16 +1,23 @@
 package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.config;
 
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
+import io.awspring.cloud.sqs.listener.acknowledgement.AcknowledgementResultCallback;
 import io.awspring.cloud.sqs.listener.acknowledgement.handler.AcknowledgementMode;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
+import java.time.OffsetDateTime;
+import java.util.Collection;
+
+@Slf4j
 @Configuration
 public class AwsSQSConfig {
 
@@ -44,8 +51,21 @@ public class AwsSQSConfig {
 
         return SqsMessageListenerContainerFactory.builder()
                 .configure(options -> options.acknowledgementMode(AcknowledgementMode.MANUAL))
-             //   .acknowledgementResultCallback(new Resu)
+                .acknowledgementResultCallback(new AckResultCallback())
                 .sqsAsyncClient(sqsAsyncClient)
                 .build();
+    }
+
+    static class AckResultCallback implements AcknowledgementResultCallback<Object> {
+
+        @Override
+        public void onSuccess(Collection<Message<Object>> messages) {
+            log.info("Ack with success at {}", OffsetDateTime.now());
+        }
+
+        @Override
+        public void onFailure(Collection<Message<Object>> messages, Throwable t) {
+            log.error("Ack with fail", t);
+        }
     }
 }
