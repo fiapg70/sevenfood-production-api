@@ -1,10 +1,12 @@
-package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.event;
+package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.event.receiver;
 
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.exception.ResourceFoundException;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.OrderDto;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.OrderStatusDTO;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.StatusPedido;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.entities.ProductionOrder;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.repositories.ProductionOrderRepository;
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.service.event.send.SendOrderStatusMessage;
 import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.util.JsonMapperUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -26,23 +28,18 @@ import java.util.UUID;
 @Service
 public class OrderPreparationService {
 
-    @Value("${app.queue-sqs.name}")
-    private String queueName;
 
-    @Value("${app.queue-status-sqs.name}")
-    private String queueStatusName;
-
-    private final SqsTemplate sqsTemplate;
+    private final SendOrderStatusMessage sendOrderStatusMessage;
     private final ProductionOrderRepository productionOrderRepository;
 
     @Autowired
-    public OrderPreparationService(SqsTemplate sqsTemplate, ProductionOrderRepository productionOrderRepository) {
-        this.sqsTemplate = sqsTemplate;
+    public OrderPreparationService(SendOrderStatusMessage sendOrderStatusMessage, ProductionOrderRepository productionOrderRepository) {
+        this.sendOrderStatusMessage = sendOrderStatusMessage;
         this.productionOrderRepository = productionOrderRepository;
     }
 
     @SqsListener(value = "${app.queue-sqs.name}")
-    public void listen(Message<?> message, @Headers Map<String, Object> header) {
+    public void listen(Message<?> message, @Headers Map<String, Object> header, Acknowledgement acknowledgement) {
         try {
             String payload = String.valueOf(message.getPayload());
             log.info("OrderPreparationService.listen {}", payload);
@@ -56,32 +53,21 @@ public class OrderPreparationService {
                     .clientId(orderStatusDTO.getClientId())
                     .orderStatus(StatusPedido.EM_PREPARACAO.getCode())
                     .totalPrice(orderStatusDTO.getTotalPrice())
-                    .products(orderStatusDTO.getProducts().toString()) //TODO -vericicar como fazer com a lista de produtos
+                    .products(orderStatusDTO.getProducts())
                     .build();
 
-            ProductionOrder save = productionOrderRepository.save(order);
-            OrderStatusDTO orderStatus = OrderStatusDTO.builder()
-                    .orderId(save.getOrderNumber())
-                    .statusPedido(save.getOrderStatus())
-                    .build();
-
-            String orderStatusMessage = objectMapper.writeValueAsString(orderStatus);
-            log.info("OrderPreparationService.listen {}", orderStatusMessage);
-            sendMessage(orderStatusMessage);
-            Acknowledgement.acknowledge(message);
+            ProductionOrder byOrderNumber = productionOrderRepository.findByOrderNumber(orderStatusDTO.getCode());
+            if (byOrderNumber != null) {
+                throw new ResourceFoundException("Order já criada: {" + byOrderNumber.getOrderNumber() + "}");
+            } else {
+                ProductionOrder save = productionOrderRepository.save(order);
+                sendOrderStatusMessage.sendOrderStatusMessage(save.getOrderNumber(), save.getOrderStatus());
+            }
+            acknowledgement.acknowledge();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        } catch (ResourceFoundException e) {
+            log.error("Order já foi enviada para a cozinha. {}", e.getMessage());
         }
     }
-
-    public void sendMessage(String message) {
-        sqsTemplate
-                .send(sqsSendOptions ->
-                        sqsSendOptions
-                                .queue(queueStatusName)
-                                .payload(message)
-                );
-    }
-
-
 }

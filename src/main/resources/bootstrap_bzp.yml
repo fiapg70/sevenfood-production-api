@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: sevenfood-production-api
+  cloud:
+    config:
+      import: "aws-parameterstore:"
+    aws:
+      region: us-east-1
+      paramstore:
+        enabled: true
+        prefix: /sevenfood-production-api/
+        default-context: application
+        profile-separator: "_"

@@ -1,5 +1,6 @@
 package br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.entities;
 
+import br.com.postech.sevenfoodproduction.sevenfoodproductionapi.model.dto.ProductDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -32,5 +34,5 @@ public class ProductionOrder {
     @Field("total_price")
     private BigDecimal totalPrice;
     @Field("products")
-    private String products;
+    private List<ProductDto> products;
 }
