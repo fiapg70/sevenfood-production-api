@@ -26,6 +26,11 @@ spring:
     sqs:
       enabled: true
       endpoint: ${AWS_ENDPOINT_URL}
+
+swagger:
+  api:
+    url: https://localhost:9998/api
+
   #security:
   #  oauth2:
   #    client:
